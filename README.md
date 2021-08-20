@@ -5,7 +5,10 @@
 - 编译目标为Redmi-AC2100
 - 默认登陆地址[192.168.5.1](http://192.168.5.1),登录名admin/admin
 
-### 防火墙ipv6配置
+### Actions secrets配置
+- 有关`secrets.ACTIONS_REPO_PAT`请参阅[源码更新自动编译内容](https://p3terx.com/archives/build-openwrt-with-github-actions.html#toc_13)
+
+### 防火墙ipv6配置参考
 - 关闭ipv6防火墙
 ```
 ip6tables -F
@@ -26,4 +29,4 @@ ip6tables -A OUTPUT -p tcp --sport 80 -j ACCEPT
 ip6tables -A INPUT -p tcp --dport 443 -j ACCEPT
 ip6tables -A OUTPUT -p tcp --sport 443 -j ACCEPT
 ```
-添加在`自定义设置——脚本——在防火墙规则启动后执行`
+按需选择，添加在`自定义设置——脚本——在防火墙规则启动后执行`

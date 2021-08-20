@@ -6,93 +6,12 @@ on:
 
 env:
   REPO_URL: https://github.com/hanwckf/rt-n56u
+  REPO_BRANCH: master
   UPLOAD_WETRANSFER: false
   UPLOAD_RELEASE: true
   Build_Targets: RM2100
+  CONFIG_FILE: RM2100.config
   DIY_SH: diy.sh
-  ENABLED_CFG: |
-    CONFIG_FIRMWARE_ENABLE_IPV6
-    CONFIG_FIRMWARE_INCLUDE_VLMCSD
-
-  DISABLED_CFG: |
-    CONFIG_FIRMWARE_ENABLE_USB
-    CONFIG_FIRMWARE_ENABLE_UFSD
-    CONFIG_FIRMWARE_ENABLE_FAT
-    CONFIG_FIRMWARE_ENABLE_EXFAT
-    CONFIG_FIRMWARE_ENABLE_EXT2
-    CONFIG_FIRMWARE_ENABLE_EXT3
-    CONFIG_FIRMWARE_ENABLE_EXT4
-    CONFIG_FIRMWARE_ENABLE_XFS
-    CONFIG_FIRMWARE_ENABLE_FUSE
-    CONFIG_FIRMWARE_ENABLE_SWAP
-    CONFIG_FIRMWARE_INCLUDE_UVC
-    CONFIG_FIRMWARE_INCLUDE_HID
-    CONFIG_FIRMWARE_INCLUDE_SERIAL
-    CONFIG_FIRMWARE_INCLUDE_AUDIO
-    CONFIG_FIRMWARE_INCLUDE_XFRM
-    CONFIG_FIRMWARE_INCLUDE_QOS
-    CONFIG_FIRMWARE_INCLUDE_IMQ
-    CONFIG_FIRMWARE_INCLUDE_IFB
-    CONFIG_FIRMWARE_INCLUDE_IPSET
-    CONFIG_FIRMWARE_INCLUDE_NFSD
-    CONFIG_FIRMWARE_INCLUDE_NFSC
-    CONFIG_FIRMWARE_INCLUDE_CIFS
-    CONFIG_FIRMWARE_INCLUDE_NTFS_3G
-    CONFIG_FIRMWARE_INCLUDE_LPRD
-    CONFIG_FIRMWARE_INCLUDE_U2EC
-    CONFIG_FIRMWARE_INCLUDE_TCPDUMP
-    CONFIG_FIRMWARE_INCLUDE_HDPARM
-    CONFIG_FIRMWARE_INCLUDE_PARTED
-    CONFIG_FIRMWARE_INCLUDE_SMBD
-    CONFIG_FIRMWARE_INCLUDE_SMBD36
-    CONFIG_FIRMWARE_INCLUDE_WINS
-    CONFIG_FIRMWARE_INCLUDE_SMBD_SYSLOG
-    CONFIG_FIRMWARE_INCLUDE_FTPD
-    CONFIG_FIRMWARE_INCLUDE_RPL2TP
-    CONFIG_FIRMWARE_INCLUDE_EAP_PEAP
-    CONFIG_FIRMWARE_INCLUDE_HTTPS
-    CONFIG_FIRMWARE_INCLUDE_SFTP
-    CONFIG_FIRMWARE_INCLUDE_DROPBEAR
-    CONFIG_FIRMWARE_INCLUDE_DROPBEAR_FAST_CODE
-    CONFIG_FIRMWARE_INCLUDE_OPENSSH
-    CONFIG_FIRMWARE_INCLUDE_OPENVPN
-    CONFIG_FIRMWARE_INCLUDE_SSWAN
-    CONFIG_FIRMWARE_INCLUDE_OPENSSL_EC
-    CONFIG_FIRMWARE_INCLUDE_OPENSSL_EXE
-    CONFIG_FIRMWARE_INCLUDE_XUPNPD
-    CONFIG_FIRMWARE_INCLUDE_MINIDLNA
-    CONFIG_FIRMWARE_INCLUDE_FIREFLY
-    CONFIG_FIRMWARE_INCLUDE_FFMPEG_NEW
-    CONFIG_FIRMWARE_INCLUDE_TRANSMISSION
-    CONFIG_FIRMWARE_INCLUDE_TRANSMISSION_WEB_CONTROL
-    CONFIG_FIRMWARE_INCLUDE_ARIA
-    CONFIG_FIRMWARE_INCLUDE_ARIA_WEB_CONTROL
-    CONFIG_FIRMWARE_INCLUDE_CURL
-    CONFIG_FIRMWARE_INCLUDE_SCUTCLIENT
-    CONFIG_FIRMWARE_INCLUDE_GDUT_DRCOM
-    CONFIG_FIRMWARE_INCLUDE_DOGCOM
-    CONFIG_FIRMWARE_INCLUDE_MINIEAP
-    CONFIG_FIRMWARE_INCLUDE_NJIT_CLIENT
-    CONFIG_FIRMWARE_INCLUDE_NAPT66
-    CONFIG_FIRMWARE_INCLUDE_SOFTETHERVPN_SERVER
-    CONFIG_FIRMWARE_INCLUDE_SOFTETHERVPN_CLIENT
-    CONFIG_FIRMWARE_INCLUDE_SOFTETHERVPN_CMD
-    CONFIG_FIRMWARE_INCLUDE_TTYD
-    CONFIG_FIRMWARE_INCLUDE_LRZSZ
-    CONFIG_FIRMWARE_INCLUDE_HTOP
-    CONFIG_FIRMWARE_INCLUDE_NANO
-    CONFIG_FIRMWARE_INCLUDE_IPERF3
-    CONFIG_FIRMWARE_INCLUDE_DUMP1090
-    CONFIG_FIRMWARE_INCLUDE_RTL_SDR
-    CONFIG_FIRMWARE_INCLUDE_MTR
-    CONFIG_FIRMWARE_INCLUDE_SOCAT
-    CONFIG_FIRMWARE_INCLUDE_SRELAY
-    CONFIG_FIRMWARE_INCLUDE_MENTOHUST
-    CONFIG_FIRMWARE_INCLUDE_FRPC
-    CONFIG_FIRMWARE_INCLUDE_FRPS
-    CONFIG_FIRMWARE_INCLUDE_TUNSAFE
-    CONFIG_FIRMWARE_INCLUDE_WIREGUARD
-    CONFIG_FIRMWARE_INCLUDE_SFE
 
 jobs:
   build:
@@ -115,40 +34,20 @@ jobs:
       if: (!cancelled())
       run: |
        df -hT $PWD
-       git clone --depth=1 $REPO_URL /opt/rt-n56u
+       git clone --depth=1 $REPO_URL -b $REPO_BRANCH /opt/rt-n56u
 
     - name: Load custom configuration
       run: |
+        mv -f $CONFIG_FILE /opt/rt-n56u/trunk/configs/templates/$Build_Targets.config
         chmod +x $DIY_SH
         cd /opt/rt-n56u
         $GITHUB_WORKSPACE/$DIY_SH
 
-    - name: Prepare toolchain
-      id: dl_toolchain
+    - name: Download toolchain
       if: (!cancelled())
       run: |
        cd /opt/rt-n56u/toolchain-mipsel
-       sh dl_toolchain.sh || echo "::set-output name=status::fail"
- 
-    - name: Build toolchain
-      if: steps.dl_toolchain.outputs.status == 'fail' && !cancelled()
-      run: |
-       cd /opt/rt-n56u/toolchain-mipsel
-       ./clean_toolchain
-       ./build_toolchain
-
-    - name: Modify configs
-      if: (!cancelled())
-      run: |
-       cd /opt/rt-n56u/trunk/configs/templates
-       for n in $ENABLED_CFG
-       do
-        sed -i "/${n}/c${n}=y" $Build_Targets.config
-       done
-       for n in $DISABLED_CFG
-       do
-        sed -i "/${n}/c${n}=n" $Build_Targets.config
-       done
+       sh dl_toolchain.sh
 
     - name: Compile the firmware
       if: (!cancelled())
@@ -182,6 +81,8 @@ jobs:
        echo "::set-output name=release_tag::$(date +"%Y.%m.%d-%H%M")"
        touch release.txt
        echo "## Padavan Release $(date +"%Y.%m.%d-%H:%M")" >> release.txt
+       echo "- Source code:" >> release.txt
+       echo "  ${{ env.REPO_URL }}/tree/${{ env.REPO_BRANCH }}" >> release.txt
        echo "- ${{ env.Build_Targets }}.trx" >> release.txt
        echo "  md5sum: $(md5sum /opt/rt-n56u/trunk/images/*.trx | cut -d" " -f1)" >> release.txt
        echo "  sha256: $(sha256sum /opt/rt-n56u/trunk/images/*.trx | cut -d" " -f1)" >> release.txt
@@ -196,7 +97,9 @@ jobs:
       with:
        tag_name: ${{ steps.tag.outputs.release_tag }}
        body_path: release.txt
-       files: /opt/rt-n56u/trunk/images/*.trx
+       files: |
+        /opt/rt-n56u/trunk/images/*.trx
+        /opt/rt-n56u/trunk/configs/templates/${{ env.Build_Targets }}.config
 
     - name: Delete workflow runs
       uses: GitRML/delete-workflow-runs@main
