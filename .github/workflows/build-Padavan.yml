@@ -6,7 +6,7 @@ on:
 
 env:
   REPO_URL: https://github.com/luoluodaduan/rt-n56u
-  REPO_BRANCH: master
+  REPO_BRANCH: dev
   UPLOAD_WETRANSFER: false
   UPLOAD_RELEASE: true
   Build_Targets: RM2100

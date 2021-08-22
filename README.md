@@ -1,6 +1,6 @@
 # Github Actions Padavan RM2100
 
-- Padavan源码是[luoluodaduan/rt-n56u:master](https://github.com/luoluodaduan/rt-n56u)。
+- Padavan源码是[luoluodaduan/rt-n56u:dev](https://github.com/luoluodaduan/rt-n56u)。
 - Github Actions参考自[P3TERX/Actions-OpenWrt](https://github.com/P3TERX/Actions-OpenWrt)&[hanwckf/scut_padavan_build](https://github.com/hanwckf/scut_padavan_build)。
 - 编译目标为Redmi-AC2100
 - 默认登陆地址[192.168.5.1](http://192.168.5.1),登录名admin/admin
