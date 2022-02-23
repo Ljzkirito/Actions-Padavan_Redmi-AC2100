@@ -5,8 +5,8 @@ on:
   workflow_dispatch:
 
 env:
-  REPO_URL: https://github.com/hanwckf/rt-n56u
-  REPO_BRANCH: master
+  REPO_URL: https://github.com/hanwckf/padavan-4.4
+  REPO_BRANCH: main
   UPLOAD_WETRANSFER: false
   UPLOAD_RELEASE: true
   Build_Targets: RM2100
@@ -80,7 +80,7 @@ jobs:
       run: |
        echo "::set-output name=release_tag::$(date +"%Y.%m.%d-%H%M")"
        touch release.txt
-       echo "## Padavan Release $(date +"%Y.%m.%d-%H:%M")" >> release.txt
+       echo "## Padavan mtk 4.4.198 kernel Test $(date +"%Y.%m.%d-%H:%M")" >> release.txt
        echo "- Source code:" >> release.txt
        echo "  ${{ env.REPO_URL }}/tree/${{ env.REPO_BRANCH }}" >> release.txt
        echo "- ${{ env.Build_Targets }}.trx" >> release.txt
