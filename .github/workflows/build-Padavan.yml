@@ -9,7 +9,7 @@ env:
   REPO_BRANCH: main
   UPLOAD_WETRANSFER: false
   UPLOAD_RELEASE: true
-  Build_Targets: RM2100
+  TNAME: RM2100
   CONFIG_FILE: RM2100.config
   DIY_SH: diy.sh
 
@@ -38,7 +38,7 @@ jobs:
 
     - name: Load custom configuration
       run: |
-        mv -f $CONFIG_FILE /opt/rt-n56u/trunk/configs/templates/$Build_Targets.config
+        mv -f $CONFIG_FILE /opt/rt-n56u/trunk/configs/templates/$TNAME.config
         chmod +x $DIY_SH
         cd /opt/rt-n56u
         $GITHUB_WORKSPACE/$DIY_SH
@@ -54,7 +54,8 @@ jobs:
       id: compile
       run: |
         cd /opt/rt-n56u/trunk
-        sudo ./build_firmware_modify $Build_Targets 0
+        cp -f configs/templates/$TNAME.config .config
+        sudo ./build_firmware_modify $TNAME 0 
         echo "::set-output name=status::success"
         echo "FILE_DATE=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
 
@@ -62,7 +63,7 @@ jobs:
       uses: actions/upload-artifact@main
       if: steps.compile.outputs.status == 'success' && !cancelled()
       with:
-        name: Padavan_firmware_${{ env.Build_Targets }}_${{ env.FILE_DATE }}
+        name: Padavan_firmware_${{ env.TNAME }}_${{ env.FILE_DATE }}
         path: /opt/rt-n56u/trunk/images
 
     - name: Upload firmware to WeTransfer
@@ -83,7 +84,7 @@ jobs:
        echo "## MeIsReallyBa Padavan-4.4 Release $(date +"%Y.%m.%d-%H:%M")" >> release.txt
        echo "- Source code:" >> release.txt
        echo "  ${{ env.REPO_URL }}/tree/${{ env.REPO_BRANCH }}" >> release.txt
-       echo "- ${{ env.Build_Targets }}.trx" >> release.txt
+       echo "- ${{ env.TNAME }}.trx" >> release.txt
        echo "  md5sum: $(md5sum /opt/rt-n56u/trunk/images/*.trx | cut -d" " -f1)" >> release.txt
        echo "  sha256: $(sha256sum /opt/rt-n56u/trunk/images/*.trx | cut -d" " -f1)" >> release.txt
        [ $UPLOAD_WETRANSFER = true ] && echo "🔗 [WeTransfer](${{ steps.wetransfer.outputs.url }})" >> release.txt
@@ -99,7 +100,7 @@ jobs:
        body_path: release.txt
        files: |
         /opt/rt-n56u/trunk/images/*.trx
-        /opt/rt-n56u/trunk/configs/templates/${{ env.Build_Targets }}.config
+        /opt/rt-n56u/trunk/configs/templates/${{ env.TNAME }}.config
 
     - name: Delete workflow runs
       uses: GitRML/delete-workflow-runs@main
