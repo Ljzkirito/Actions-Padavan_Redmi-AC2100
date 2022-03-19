@@ -5,8 +5,8 @@ on:
   workflow_dispatch:
 
 env:
-  REPO_URL: https://github.com/hanwckf/rt-n56u
-  REPO_BRANCH: master
+  REPO_URL: https://github.com/keke1023/Padavan
+  REPO_BRANCH: main
   UPLOAD_WETRANSFER: false
   UPLOAD_RELEASE: true
   Build_Targets: RM2100
@@ -19,7 +19,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@main
+      uses: actions/checkout@v3
 
     - name: Prepare environment
       run: |
