@@ -12,12 +12,10 @@
 name: Update Checker
 
 env:
-  REPO_URL: https://github.com/hanwckf/rt-n56u
+  REPO_URL: https://github.com/keke1023/Padavan
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: 0 23 * * 6
 
 jobs:
   check:
