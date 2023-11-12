@@ -7,15 +7,14 @@ on:
 env:
   REPO_URL: https://github.com/hanwckf/padavan-4.4
   REPO_BRANCH: main
-  UPLOAD_WETRANSFER: false
   UPLOAD_RELEASE: true
-  Build_Targets: RM2100
-  CONFIG_FILE: RM2100.config
+  Build_Targets: CR660x
+  CONFIG_FILE: CR660x.config
   DIY_SH: diy.sh
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Checkout
@@ -55,7 +54,7 @@ jobs:
       run: |
         cd /opt/rt-n56u/trunk
         fakeroot ./build_firmware_modify $Build_Targets
-        echo "::set-output name=status::success"
+        echo "status=success" >> $GITHUB_OUTPUT
         echo "FILE_DATE=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
 
     - name: Upload firmware directory
@@ -65,35 +64,25 @@ jobs:
         name: Padavan_firmware_${{ env.Build_Targets }}_${{ env.FILE_DATE }}
         path: /opt/rt-n56u/trunk/images
 
-    - name: Upload firmware to WeTransfer
-      id: wetransfer
-      if: steps.compile.outputs.status == 'success' && env.UPLOAD_WETRANSFER == 'true' && !cancelled()
-      run: |
-       curl -fsSL git.io/file-transfer | sh
-       ./transfer wet -s -p 16 --no-progress /opt/rt-n56u/trunk/images 2>&1 | tee wetransfer.log
-       echo "::warning file=wetransfer.com::$(cat wetransfer.log | grep https)"
-       echo "::set-output name=url::$(cat wetransfer.log | grep https | cut -f3 -d" ")"
-
     - name: Generate release tag
       id: tag
       if: steps.compile.outputs.status == 'success' && env.UPLOAD_RELEASE == 'true' && !cancelled()
       run: |
-       echo "::set-output name=release_tag::$(date +"%Y.%m.%d-%H%M")"
+       echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
        touch release.txt
-       echo "## Padavan mtk 4.4.198 kernel Test $(date +"%Y.%m.%d-%H:%M")" >> release.txt
+       echo "## Padavan CR660x 4.4 Release $(date +"%Y.%m.%d-%H:%M")" >> release.txt
        echo "- Source code:" >> release.txt
        echo "  ${{ env.REPO_URL }}/tree/${{ env.REPO_BRANCH }}" >> release.txt
        echo "- ${{ env.Build_Targets }}.trx" >> release.txt
        echo "  md5sum: $(md5sum /opt/rt-n56u/trunk/images/*.trx | cut -d" " -f1)" >> release.txt
        echo "  sha256: $(sha256sum /opt/rt-n56u/trunk/images/*.trx | cut -d" " -f1)" >> release.txt
-       [ $UPLOAD_WETRANSFER = true ] && echo "🔗 [WeTransfer](${{ steps.wetransfer.outputs.url }})" >> release.txt
-       echo "::set-output name=status::success"
+       echo "status=success" >> $GITHUB_OUTPUT
 
     - name: Upload firmware to release
       uses: softprops/action-gh-release@v1
       if: steps.tag.outputs.status == 'success' && !cancelled()
       env:
-       GITHUB_TOKEN: ${{ secrets.ACTIONS_REPO_PAT }}
+       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
        tag_name: ${{ steps.tag.outputs.release_tag }}
        body_path: release.txt
@@ -102,18 +91,18 @@ jobs:
         /opt/rt-n56u/trunk/configs/templates/${{ env.Build_Targets }}.config
 
     - name: Delete workflow runs
-      uses: GitRML/delete-workflow-runs@main
+      uses: Mattraks/delete-workflow-runs@v2
       with:
-       token: ${{ secrets.ACTIONS_REPO_PAT }}
+       token: ${{ secrets.GITHUB_TOKEN }}
        repository: ${{ github.repository }}
        retain_days: 1
        keep_minimum_runs: 3
 
     - name: Remove old Releases
-      uses: dev-drprasad/delete-older-releases@v0.1.0
+      uses: dev-drprasad/delete-older-releases@v0.2.1
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       with:
        keep_latest: 3
        delete_tags: true
       env:
-       GITHUB_TOKEN: ${{ secrets.ACTIONS_REPO_PAT }}
+       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
